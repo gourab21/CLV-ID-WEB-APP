@@ -1,0 +1,6 @@
+# Ignore secrets and environments
+secrets/
+venv/
+.env
+*.json
+__pycache__/
