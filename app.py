@@ -50,21 +50,38 @@ load_dotenv(dotenv_path=ENV_PATH)
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 GCV_KEY_PATH = BASE_DIR / "secrets" / "clv-id-ocr-icpr-53133e7bd944.json"
 
+
 # ==========================================
 #          CLIENT INITIALIZATION
 # ==========================================
 @st.cache_resource
 def get_clients():
-    if not OPENAI_KEY:
-        st.error("❌ OpenAI API Key not found in .env")
+    # 1. Setup OpenAI
+    # Try getting from Streamlit Secrets first (Cloud), then Environment (Local)
+    api_key = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY"))
+    
+    if not api_key:
+        st.error("❌ OpenAI API Key not found.")
         st.stop()
-    openai_client = OpenAI(api_key=OPENAI_KEY)
+    openai_client = OpenAI(api_key=api_key)
 
-    if not GCV_KEY_PATH.exists():
-        st.error(f"❌ Google Key not found at: {GCV_KEY_PATH}")
+    # 2. Setup Google Cloud Vision
+    # STRATEGY: Cloud First, Local Second
+    
+    # Check if we are in Streamlit Cloud (looking for the TOML section we pasted)
+    if "google_credentials" in st.secrets:
+        # Create credentials directly from the dictionary in memory
+        creds_dict = dict(st.secrets["google_credentials"])
+        creds = service_account.Credentials.from_service_account_info(creds_dict)
+    
+    # Fallback: Check for local file (for when you run on your laptop)
+    elif GCV_KEY_PATH.exists():
+        creds = service_account.Credentials.from_service_account_file(str(GCV_KEY_PATH))
+    
+    else:
+        st.error("❌ Google Cloud Credentials not found.\n\nOn Local: Check 'secrets/' folder.\nOn Cloud: Check 'Advanced Settings > Secrets'.")
         st.stop()
     
-    creds = service_account.Credentials.from_service_account_file(str(GCV_KEY_PATH))
     vision_client = vision.ImageAnnotatorClient(credentials=creds)
     
     return openai_client, vision_client
