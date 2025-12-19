@@ -188,7 +188,7 @@ with col_logo:
 
 st.markdown("<h1>CLV-ID: Cross-Lingual Verification for AI-Generated ID Forgery Detection</h1>", unsafe_allow_html=True)
 
-st.markdown("<h4 style='text-align: center; color: #555;'>Gourab Das, Manasa, Dr. Pavan Kumar C, Dr. Raghavendra Ramachandra</h4>", unsafe_allow_html=True)7
+st.markdown("<h4 style='text-align: center; color: #555;'>Gourab Das, Manasa, Dr. Pavan Kumar C, Dr. Raghavendra Ramachandra</h4>", unsafe_allow_html=True)
 st.markdown("---")
 
 # 2. UPLOAD SECTION
