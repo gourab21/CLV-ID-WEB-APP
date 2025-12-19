@@ -92,10 +92,14 @@ client_openai, client_vision = get_clients()
 #          HELPER FUNCTIONS
 # ==========================================
 
+
 def get_ocr_text(content):
     """Stage 1: Google Cloud Vision OCR"""
     image = vision.Image(content=content)
-    lang_hints = ["ar", "zh", "fr", "hi", "fa", "pt", "ru", "tr", "en"]
+    lang_hints = [
+    "ar", "zh", "fr", "hi", "fa", "pt", "ru", "tr", "en",
+    "bn", "kn", "or", "ta", "te", "ml", "gu", "mr", "pa"
+]
     response = client_vision.document_text_detection(
         image=image,
         image_context={"language_hints": lang_hints}
