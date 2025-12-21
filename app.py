@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import json
 import re
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 from google.cloud import vision
@@ -44,12 +45,9 @@ BASE_DIR = Path(__file__).resolve().parent
 
 ENV_PATH = BASE_DIR / "secrets" / ".env"
 load_dotenv(dotenv_path=ENV_PATH)
-
-<<<<<<< HEAD
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 GCV_KEY_PATH = BASE_DIR / "secrets" / "clv-id-ocr-icpr-53133e7bd944.json"
 
-=======
->>>>>>> 41aa07ce7220e5720c29afdb16f09b5af5d4c406
 # ==========================================
 #          CLIENT INITIALIZATION
 # ==========================================
@@ -133,19 +131,6 @@ def extract_semantics(text):
         f"Text: {text}"
     )
 
-<<<<<<< HEAD
-    response = client_openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You output strict JSON only."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.0,
-        response_format={"type": "json_object"}
-    )
-
-    return json.loads(response.choices[0].message.content)
-=======
     try:
         response = client_openai.chat.completions.create(
             model="gpt-4o-mini",
@@ -160,7 +145,6 @@ def extract_semantics(text):
     except Exception as e:
         st.error(f"OpenAI Error: {e}")
         return {}
->>>>>>> 41aa07ce7220e5720c29afdb16f09b5af5d4c406
 
 
 def levenshtein(a, b):
@@ -209,45 +193,25 @@ with col_logo:
     else:
         st.markdown("## 🛡️ CLV-ID")
 
-<<<<<<< HEAD
-st.markdown(
-    "<h1>CLV-ID: Cross-Lingual Verification for AI-Generated ID Forgery Detection</h1>",
-    unsafe_allow_html=True
-)
-st.markdown("---")
-
-uploaded_file = st.file_uploader(
-    "📂 Upload ID Card (JPG/PNG)",
-    type=['jpg', 'png', 'jpeg']
-)
-=======
 st.markdown("<h1>CLV-ID: Cross-Lingual Verification for AI-Generated ID Forgery Detection</h1>", unsafe_allow_html=True)
 st.markdown("---")
 
 uploaded_file = st.file_uploader("📂 Upload ID Card (JPG/PNG)", type=['jpg', 'png', 'jpeg'])
->>>>>>> 41aa07ce7220e5720c29afdb16f09b5af5d4c406
 
 if uploaded_file:
     st.image(uploaded_file, caption="Input Document", use_container_width=True)
 
     if st.button("🚀 INITIATE VERIFICATION PROTOCOL"):
 
-<<<<<<< HEAD
-        # -------- OCR --------
-=======
->>>>>>> 41aa07ce7220e5720c29afdb16f09b5af5d4c406
         st.markdown("### 1️⃣ Text Extraction (OCR)")
         with st.spinner("Scanning document surface..."):
             raw_text = get_ocr_text(uploaded_file.getvalue())
             if not raw_text:
                 st.stop()
-<<<<<<< HEAD
-            st.session_state["raw_text"] = raw_text
             with st.expander("📄 View Raw Extracted Text"):
                 st.code(raw_text)
-        st.success("OCR Extraction Complete")
+            st.success("OCR Extraction Complete")
 
-        # -------- LLM --------
         st.markdown("### 2️⃣ Semantic Parsing (LLM)")
         with st.spinner("Parsing name fields..."):
             data = extract_semantics(raw_text)
@@ -260,20 +224,21 @@ if uploaded_file:
             c1.metric("Local Script", st.session_state["local_name"])
             c2.metric("English Field", st.session_state["english_name"])
             c3.metric("Transliteration", st.session_state["transliteration"])
-        st.success("Semantic Parsing Complete")
+            st.success("Semantic Parsing Complete")
 
-# -------- Slider (NO API CALLS) --------
+# 🔧 USER INPUT HERE (NO API RE-RUNS)
+lev_threshold = st.slider(
+    "🔧 Set Levenshtein Distance Tolerance",
+    min_value=0,
+    max_value=10,
+    value=2,
+    help="Maximum allowed edit distance"
+)
+
 if "english_name" in st.session_state and "transliteration" in st.session_state:
 
-    lev_threshold = st.slider(
-        "🔧 Set Levenshtein Distance Tolerance",
-        min_value=0,
-        max_value=10,
-        value=2,
-        help="Maximum allowed edit distance"
-    )
-
     st.markdown("### 3️⃣ Cross-Lingual Verification")
+
     dist, is_exact, is_close = perform_matching(
         st.session_state["english_name"],
         st.session_state["transliteration"],
@@ -294,52 +259,3 @@ if "english_name" in st.session_state and "transliteration" in st.session_state:
     else:
         st.error("🚨 **FORGERY DETECTED (ATTACK)**")
         st.caption(f"Distance {dist} > threshold {lev_threshold}")
-=======
-            with st.expander("📄 View Raw Extracted Text"):
-                st.code(raw_text)
-            st.success("OCR Extraction Complete")
-
-        st.markdown("### 2️⃣ Semantic Parsing (LLM)")
-        with st.spinner("Parsing name fields..."):
-            data = extract_semantics(raw_text)
-            local_name = data.get("local_name", "N/A")
-            english_name = data.get("english_name", "N/A")
-            transliteration = data.get("transliteration", "N/A")
-
-            c1, c2, c3 = st.columns(3)
-            c1.metric("Local Script", local_name)
-            c2.metric("English Field", english_name)
-            c3.metric("Transliteration", transliteration)
-            st.success("Semantic Parsing Complete")
-
-        # 🔧 USER INPUT HERE
-        lev_threshold = st.slider(
-            "🔧 Set Levenshtein Distance Tolerance",
-            min_value=0,
-            max_value=10,
-            value=2,
-            help="Maximum allowed edit distance"
-        )
-
-        st.markdown("### 3️⃣ Cross-Lingual Verification")
-        with st.spinner("Computing semantic distance..."):
-            dist, is_exact, is_close = perform_matching(
-                english_name,
-                transliteration,
-                lev_threshold
-            )
-            st.metric("Levenshtein Distance", dist)
-
-        st.markdown("---")
-        st.subheader("🛡️ Final Verdict")
-
-        if is_close:
-            st.success("✅ **BONAFIDE (GENUINE DOCUMENT)**")
-            if is_exact:
-                st.caption("Perfect character-level match")
-            else:
-                st.caption(f"Within tolerance (threshold = {lev_threshold})")
-        else:
-            st.error("🚨 **FORGERY DETECTED (ATTACK)**")
-            st.caption(f"Distance {dist} > threshold {lev_threshold}")
->>>>>>> 41aa07ce7220e5720c29afdb16f09b5af5d4c406
